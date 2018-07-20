@@ -1,0 +1,208 @@
+package pedigreeVerification;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import net.maizegenetics.dna.snp.FilterGenotypeTable;
+import net.maizegenetics.dna.snp.GenotypeTable;
+import net.maizegenetics.dna.snp.ImportUtils;
+import net.maizegenetics.taxa.TaxaList;
+/* A text file consisting of genotypic information.
+ * with .hmp.txt **
+ * */
+
+public class PedigreeFileInfo {
+	/*
+	 * getFilteredGenotypeTable() Returns genotype table that has been filtered
+	 * Currently returns F1 and BC1F1 samples
+	 */
+	private static GenotypeTable genos;
+	private static ArrayList<ArrayList<String>> taxaInfo;
+	
+	
+	public static GenotypeTable getParentsGenoTable() {
+		GenotypeTable pg = getParentsGenotypeTable(genos, taxaInfo);
+		
+//		for(int i = 0; i < pg.numberOfTaxa(); i++) {
+//			System.out.println(pg.taxaName(i));
+//		}
+		return pg;
+	}
+	
+	private static GenotypeTable getParentsGenotypeTable(GenotypeTable genos, ArrayList<ArrayList<String>> taxaInfo) {
+		ArrayList<String> parentNames = new ArrayList<String>();
+		ArrayList<String> parentDNANames = new ArrayList<String>();
+		TaxaList currTaxa = genos.taxa();
+		MutableTaxaList keepParentTaxa = new MutableTaxaList(); //has the current taxa to be fed to GetPollinationType.java (1 sample group per run)
+	
+		for(int i = 1; i < taxaInfo.size(); i++) {			
+			if(!parentNames.contains(taxaInfo.get(i).get(1))) {
+				parentNames.add(taxaInfo.get(i).get(1));
+				parentDNANames.add(taxaInfo.get(i).get(0));
+				
+			} 
+		}
+		parentNames.clear();
+		//get parent genotypes from currTaxa
+		
+		for(int j = 0; j < parentDNANames.size(); j++) {
+			for(int k = 0; k < currTaxa.size(); k++) {
+				if(parentDNANames.get(j).matches(currTaxa.get(k).getName())) {
+					keepParentTaxa.add(currTaxa.get(k));
+				}
+			}
+		}
+		
+		return FilterGenotypeTable.getInstance(genos, keepParentTaxa, false);
+	}
+	
+	private static GenotypeTable passArrayList(GenotypeTable genos, ArrayList<ArrayList<String>> taxaInfo) {
+		GenotypeTable parentGenos = getParentsGenotypeTable(genos, taxaInfo);
+		return parentGenos;
+	}
+	
+	public static ArrayList<GenotypeTable> getFilteredGenotypeTable() {
+		String dir = "/home/cloud/Documents/irri/sampleData/";
+		String genotype_file = dir + "qc2.geno.hmp.txt";
+		String genotype_file_info = dir + "qc2.sample_no_spaces.txt";
+		
+		return readGenotypeTable(dir, genotype_file, genotype_file_info);
+	}
+
+	private static ArrayList<GenotypeTable> readGenotypeTable(String dir, String genotype_file, String genotype_file_info) {
+		// READ GENOTYPE FILE INFORMATION // SAMPLES
+		taxaInfo = new ArrayList<ArrayList<String>>();
+		String line = null;
+		int taxaSize = 0; // counter of every ArrayList initialized inside taxa ArrayList
+		try {
+			BufferedReader buf = new BufferedReader(new FileReader(genotype_file_info));
+
+			while ((line = buf.readLine()) != null) {
+				taxaInfo.add(new ArrayList<String>());
+				String[] holder = line.split("\t");
+				for (int i = 0; i < holder.length; i++) {
+					if (holder[i].trim().length() > 0) {
+						taxaInfo.get(taxaSize).add(holder[i]);
+					} else {
+						taxaInfo.get(taxaSize).add(""); // added empty string to maintain nxn matrix
+					}
+				}
+				taxaSize++; // maintain 0-indexing; place counter after adding element inside
+							// taxa.get(arraylist)
+			}
+
+			buf.close();
+		} catch (FileNotFoundException e) {
+			System.out.println("File not found!");
+		} catch (IOException e) {
+			System.out.println("Error reading file.");
+		}
+
+//        for(int i = 0; i < taxaInfo.size(); i++) {
+//        		System.out.println(taxaInfo.get(i));
+//        }
+		
+		// READ GENOTYPE TABLE
+		genos = ImportUtils.readFromHapmap(genotype_file);
+		
+
+//		passArrayList(genos, taxaInfo);
+		// GET GROUPS
+		HashMap<String, ArrayList<Integer>> taxaPerGroup = sampleByGroup(genos, taxaInfo);
+
+		ArrayList<GenotypeTable> listOfGenos = compareGenotypeFiles(genos, taxaInfo, taxaPerGroup);
+		return listOfGenos;
+	}
+
+
+	private static HashMap<String, ArrayList<Integer>> sampleByGroup(GenotypeTable genos, ArrayList<ArrayList<String>> taxaInfo) {
+		// TODO Auto-generated method stub
+		TaxaList currTaxa = genos.taxa();
+		ArrayList<String> taxaGroups = new ArrayList<String>();
+		HashMap<String, ArrayList<Integer>> taxaPerGroup = new HashMap<String, ArrayList<Integer>>();
+
+		for(int i=0;i<taxaInfo.size();i++) {
+				if(taxaInfo.get(i).size() > 8) {
+					if(!taxaGroups.contains(taxaInfo.get(i).get(8))) {
+						taxaGroups.add(taxaInfo.get(i).get(8));
+					}
+				}
+		}
+
+		for(int k = 1; k < taxaGroups.size(); k++) {
+			String gname = taxaGroups.get(k).toLowerCase();
+			ArrayList<Integer> indices = new ArrayList<Integer>();
+			for(int l = 1; l < currTaxa.size(); l++) {
+				String dname = currTaxa.get(l).getName().toLowerCase();
+				if(dname.contains(gname) && !(taxaPerGroup.containsKey(gname))) {
+					indices.add(l);
+				}
+			}
+			taxaPerGroup.put(gname, indices);
+		}
+				
+//		print
+//		for (String name: taxaPerGroup.keySet()){
+//           System.out.println(taxaPerGroup.get(name));  
+//		} 
+		
+		return taxaPerGroup;
+    }
+
+	private static ArrayList<GenotypeTable> compareGenotypeFiles(GenotypeTable genos, ArrayList<ArrayList<String>> taxaInfo, HashMap<String, ArrayList<Integer>> taxaPerGroup) {
+		ArrayList<GenotypeTable> listOfGenos = new ArrayList<GenotypeTable>();
+		TaxaList currTaxa = genos.taxa();
+//		boolean isF1_or_BC1F1 = false;
+		
+		for(String groupName: taxaPerGroup.keySet()) {
+			ArrayList<Integer> arr = taxaPerGroup.get(groupName);
+			MutableTaxaList keepTaxa = new MutableTaxaList(); //has the current taxa to be fed to GetPollinationType.java (1 sample group per run)
+			for (int taxonIndex = 0; taxonIndex < arr.size(); taxonIndex++) {
+				int t = arr.get(taxonIndex); //////////////////////////////
+//				isF1_or_BC1F1 = matchGermplasmType(genos, taxaInfo, t);
+//				if (isF1_or_BC1F1) {
+//					System.out.println("trueee");
+////					keepTaxa.add(currTaxa.get(taxonIndex));
+//				}
+				keepTaxa.add(currTaxa.get(t));
+			}
+			GenotypeTable filtered = FilterGenotypeTable.getInstance(genos, keepTaxa, false);
+			listOfGenos.add(filtered);
+		}
+//			
+		
+		return listOfGenos;
+	}
+
+	private static boolean matchGermplasmType(GenotypeTable genos, ArrayList<ArrayList<String>> taxaInfo, int taxonIndex) {
+		TaxaList currTaxa = genos.taxa();
+		int i = taxonIndex;
+		int k = 0;
+		
+ 		while (k < taxaInfo.size()) {
+			if (taxaInfo.get(k).get(0).matches(currTaxa.get(i).getName())) {
+				if (taxaInfo.get(k).get(3).matches("F1") || taxaInfo.get(k).get(3).matches("BC1F1"))
+					return true;
+			}
+			k++;
+		}
+		return false;
+	}
+
+	public static void main(String[] args) {
+//		ArrayList<GenotypeTable> filteredGenos = getFilteredGenotypeTable();
+//		getParentsGenoTable();
+//		long startTime = System.nanoTime();
+//		long endTime = System.nanoTime();
+//		System.out.println("Took "+(endTime - startTime) + " ns"); 
+		
+//		for(int i = 0; i < filteredGenos.numberOfTaxa(); i++) {
+//			System.out.println(filteredGenos.taxaName(i));
+//		}
+	}
+
+}
