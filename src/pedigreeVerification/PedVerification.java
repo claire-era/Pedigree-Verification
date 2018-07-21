@@ -22,6 +22,7 @@ public class PedVerification {
 				polyMarkers.add(site);
 			}
 		}
+		
 
 		return polyMarkers;
 	}
@@ -329,10 +330,12 @@ public class PedVerification {
 	}
 
 	private static boolean[] verifyParentProgenyGenotype(GenotypeTable genos, ArrayList<Integer> outCrossTaxaIndex) {
-		GenotypeTable parentGenotypeTable = PedigreeFileInfo.getParentsGenoTable();
 		
 		boolean[] accepted = new boolean[outCrossTaxaIndex.size()];
-		
+		/* for every accepted F1
+		 * 		p1 =
+		 * */
+		PedigreeFileInfo.progenyGroupToParentMapping(genos, outCrossTaxaIndex);
 		
 		return accepted;
 	}
@@ -354,11 +357,11 @@ public class PedVerification {
 //			System.out.print("\n");
 //		}
 //		
-		System.out.print("\n");
-
-		for (int c = 0; c < meanScores.length; c++) {
-			System.out.println(genos.taxaName(c) + ": " + meanScores[c]);
-		}
+//		System.out.print("\n");
+//
+//		for (int c = 0; c < meanScores.length; c++) {
+//			System.out.println(genos.taxaName(c) + ": " + meanScores[c]);
+//		}
 //
 		System.out.print("\n");
 
@@ -375,11 +378,10 @@ public class PedVerification {
 		// For every marker inside polyMarkers, identify if Type 1 or 2 or 3 cross
 		// Identify parent genotypes per site
 		// Match taxa/sample according to the type of cross of the site and give score
-		
-		
 
 		try {
 			ArrayList<GenotypeTable> listOfGenos = ReadFile();
+//			GenotypeTable parentGenos = PedigreeFileInfo.getParentsGenoTable();
 			for (int i = 0; i < listOfGenos.size(); i++) {
 				GenotypeTable genos = listOfGenos.get(i);
 				ArrayList<Integer> polyMarkers = GetPolymorphicMarkers(genos);
@@ -396,10 +398,13 @@ public class PedVerification {
 					
 					// step 2
 					// boolean 2d array of every accepted F1, (or taxa indices of outCrossTaxaIndex)
-//					boolean[] accepted = verifyParentProgenyGenotype(genos, outCrossTaxaIndex);
-
-				}
+					boolean[] acceptedTaxa = verifyParentProgenyGenotype(genos, outCrossTaxaIndex);
+					break;
+					
+				}	
 			}
+			
+
 			long startTime = System.nanoTime();
 			long endTime = System.nanoTime();
 			System.out.println("Took "+(endTime - startTime) + " ns"); 
