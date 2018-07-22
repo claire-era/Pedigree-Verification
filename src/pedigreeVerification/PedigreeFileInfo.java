@@ -24,19 +24,11 @@ public class PedigreeFileInfo {
 	private static ArrayList<ArrayList<String>> taxaInfo;
 
 	public static int[][] progenyGroupToParentMapping(GenotypeTable currGenos, ArrayList<Integer> outCrossTaxaIndex) {
-		// for every
-		// get parent
-		// int[] = indexOfParent
-		
-		
-		
 		String p1name;
 		String p2name;
-		
-		
-		int[][] progenyParentMap = new int[outCrossTaxaIndex.size()][2]; // [[indexOfParent,
-																			// indexOfF1_1],[indexOfParent,
-																			// indexOfF1_2],...]
+		int[][] progenyParentMap = new int[outCrossTaxaIndex.size()][3]; // [
+																		 // [indexOfParent1, indexOfParent2,indexOfF1_1],
+																		 // [indexOfParent,indexOfF1_2],...]
 		for (int i = 0; i < outCrossTaxaIndex.size(); i++) {
 			for (int j = 1; j < taxaInfo.size(); j++) {
 				if (currGenos.taxaName(outCrossTaxaIndex.get(i)).contains(taxaInfo.get(j).get(0))) {
@@ -46,10 +38,22 @@ public class PedigreeFileInfo {
 						p1name = getParentName(p1);
 						p2name = getParentName(p2);
 						
-						System.out.println(currGenos.taxaName(outCrossTaxaIndex.get(i)) + ": ");
-						System.out.println(p1name + " " + p2name);
-						break;
-//						System.out.println(genos.taxaName(p) + " " + genos.taxaName(q));
+						if(p1name == null) {
+							p1name = "MISSING";
+						}if(p2name == null) {
+							p2name = "MISSING";
+						}						
+						
+						int p1index = getGenotypeIndex(p1name);
+						int p2index = getGenotypeIndex(p2name);
+						int childIndex = getGenotypeIndex(currGenos.taxaName(outCrossTaxaIndex.get(i)));
+						
+						progenyParentMap[i][0] = p1index;
+						progenyParentMap[i][1] = p2index;
+						progenyParentMap[i][2] = childIndex;
+						System.out.println(childIndex + genos.taxaName(childIndex) + ": " + p1name + " " + p2name);
+
+//						System.out.println(genos.taxaName(p1index) + " " + genos.taxaName(p2index));
 				}
 			}
 		}
@@ -59,10 +63,7 @@ public class PedigreeFileInfo {
 	
 	
 	private static String getParentName(String parentName) {
-//		GenotypeTable pg = getParentsGenoTable();
-//		System.out.println(parentName);
 		for(int i = 0; i < taxaInfo.size(); i++) {
-//			System.out.println(parentName + " " + taxaInfo.get(i).get(1).trim());
 			if(parentName.trim().equals(taxaInfo.get(i).get(1).trim())) {
 				return taxaInfo.get(i).get(0);
 			}
@@ -72,25 +73,17 @@ public class PedigreeFileInfo {
 		return null;
 	}
 	
-	/*private static int getGenotypeIndex(int taxaIndex) {
+	private static int getGenotypeIndex(String taxaName) {
 		int index = 0;
-		System.out.println(taxaName);
 		for(int i = 0; i < genos.numberOfTaxa(); i++) {
-			if(genos.taxaName(i) == taxaName) {
-//				System.out.println("Asdasdasdas");
-				return i;
-			}
+			if(genos.taxaName(i).trim().equals(taxaName.trim())) return i;
 		}
 		
 		return index;
-	}*/
+	}
 
 	public static GenotypeTable getParentsGenoTable() {
 		GenotypeTable pg = getParentsGenotypeTable(genos, taxaInfo);
-
-//		for(int i = 0; i < pg.numberOfTaxa(); i++) {
-//			System.out.println(pg.taxaName(i));
-//		}
 
 		return pg;
 	}

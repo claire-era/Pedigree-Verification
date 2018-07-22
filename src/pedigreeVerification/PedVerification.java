@@ -323,23 +323,82 @@ public class PedVerification {
 			} else if (meanScores[i] == meanScores[minIndex]) {
 				indices.add(i);
 			}
-
 		}
 
 		return indices;
 	}
 
-	private static boolean[] verifyParentProgenyGenotype(GenotypeTable genos, ArrayList<Integer> outCrossTaxaIndex) {
+	private static boolean[] verifyParentProgenyGenotype(GenotypeTable genos, ArrayList<Integer> outCrossTaxaIndex, ArrayList<Integer> polyMarkers) {
 		
 		boolean[] accepted = new boolean[outCrossTaxaIndex.size()];
-		/* for every accepted F1
-		 * 		p1 =
-		 * */
-		PedigreeFileInfo.progenyGroupToParentMapping(genos, outCrossTaxaIndex);
+		int[][] parentProgenyMap = PedigreeFileInfo.progenyGroupToParentMapping(genos, outCrossTaxaIndex);
+		
+		for(int i = 0; i < parentProgenyMap.length; i++) {
+			for(int j = 0; j < parentProgenyMap[0].length; j++) { //[0] - parent 1; [1] - parent 2
+//				if(j == 0) { // parent 1
+//					
+//				}else if(j == 1) { //parent 2
+//					
+//				}else if(j == 2) { //child
+//					
+//				}
+				
+//				byte p1geno = genos.genoty;
+				
+			}
+		}
+		
 		
 		return accepted;
 	}
+	
+//	public static String getGenotype(GenotypeTable genos, int taxaIndex) {
+//		majA = genos.
+//		byte geno = NucleotideAlignmentConstants.getNucleotideDiploidByte(value);
+//	}
 
+	
+	public static void main(String[] args) {
+		// STEP 2 Get polymorphic markers
+		// STEP 3 Identify cross type: 1 or 2 or 3
+		// For every marker inside polyMarkers, identify if Type 1 or 2 or 3 cross
+		// Identify parent genotypes per site
+		// Match taxa/sample according to the type of cross of the site and give score
+
+		try {
+			ArrayList<GenotypeTable> listOfGenos = ReadFile();
+//			GenotypeTable parentGenos = PedigreeFileInfo.getParentsGenoTable();
+			for (int i = 0; i < listOfGenos.size(); i++) {
+				GenotypeTable genos = listOfGenos.get(i);
+				ArrayList<Integer> polyMarkers = GetPolymorphicMarkers(genos);
+				if (polyMarkers.size() != 0) {
+					byte[] crossTypeAllSites = GetCrossType(genos, polyMarkers);
+					byte[][] parentGenotypeAllSites = getParentGenotypeAllSites(genos, polyMarkers, crossTypeAllSites);
+					double[][] scores = getScoresAllTaxa(genos, polyMarkers, crossTypeAllSites);
+					double[] meanScores = getMeanScoresAllTaxa(genos, polyMarkers, scores);
+					ArrayList<Integer> outCrossTaxaIndex = getOutCrossedTaxa(meanScores); //list of outcrossed
+						
+//					print(genos, polyMarkers, scores, meanScores, outCrossTaxaIndex);
+					
+					// step 2
+					// boolean 2d array of every accepted F1, (or taxa indices of outCrossTaxaIndex)
+					boolean[] acceptedTaxa = verifyParentProgenyGenotype(genos, outCrossTaxaIndex, polyMarkers);
+//					break;
+					
+				}	
+			}
+			
+
+			long startTime = System.nanoTime();
+			long endTime = System.nanoTime();
+			System.out.println("Took "+(endTime - startTime) + " ns"); 
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	private static void print(GenotypeTable genos, ArrayList<Integer> polyMarkers, double[][] scores, double[] meanScores,
 			ArrayList<Integer> outCrossTaxaIndex) {
 //		System.out.print("\t");
@@ -372,47 +431,5 @@ public class PedVerification {
 
 	}
 
-	public static void main(String[] args) {
-		// STEP 2 Get polymorphic markers
-		// STEP 3 Identify cross type: 1 or 2 or 3
-		// For every marker inside polyMarkers, identify if Type 1 or 2 or 3 cross
-		// Identify parent genotypes per site
-		// Match taxa/sample according to the type of cross of the site and give score
 
-		try {
-			ArrayList<GenotypeTable> listOfGenos = ReadFile();
-//			GenotypeTable parentGenos = PedigreeFileInfo.getParentsGenoTable();
-			for (int i = 0; i < listOfGenos.size(); i++) {
-				GenotypeTable genos = listOfGenos.get(i);
-				ArrayList<Integer> polyMarkers = GetPolymorphicMarkers(genos);
-				if (polyMarkers.size() != 0) {
-					byte[] crossTypeAllSites = GetCrossType(genos, polyMarkers);
-					byte[][] parentGenotypeAllSites = getParentGenotypeAllSites(genos, polyMarkers, crossTypeAllSites);
-					double[][] scores = getScoresAllTaxa(genos, polyMarkers, crossTypeAllSites);
-					double[] meanScores = getMeanScoresAllTaxa(genos, polyMarkers, scores);
-					ArrayList<Integer> outCrossTaxaIndex = getOutCrossedTaxa(meanScores); // returns array of taxa that
-																							// is the result of
-																							// out-crossed
-						
-//					print(genos, polyMarkers, scores, meanScores, outCrossTaxaIndex);
-					
-					// step 2
-					// boolean 2d array of every accepted F1, (or taxa indices of outCrossTaxaIndex)
-					boolean[] acceptedTaxa = verifyParentProgenyGenotype(genos, outCrossTaxaIndex);
-					break;
-					
-				}	
-			}
-			
-
-			long startTime = System.nanoTime();
-			long endTime = System.nanoTime();
-			System.out.println("Took "+(endTime - startTime) + " ns"); 
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 }
