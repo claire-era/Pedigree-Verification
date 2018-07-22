@@ -7,8 +7,8 @@ import net.maizegenetics.dna.snp.GenotypeTable;
 import net.maizegenetics.dna.snp.NucleotideAlignmentConstants;
 
 public class PedVerification {
-	public static ArrayList<GenotypeTable> ReadFile() { // Read file contents
-		ArrayList<GenotypeTable> listOfGenos = PedigreeFileInfo.getFilteredGenotypeTable();
+	public static ArrayList<GenotypeTable> ReadFile(String hmpFile, String pedFile) { // Read file contents
+		ArrayList<GenotypeTable> listOfGenos = PedigreeFileInfo.getFilteredGenotypeTable(hmpFile, pedFile);
 		return listOfGenos;
 	}
 
@@ -344,6 +344,14 @@ public class PedVerification {
 //				}
 				
 //				byte p1geno = genos.genoty;
+//				if(parentProgenyMap[i][0] == 0) {
+//					System.out.println("MISSING");
+//					
+//				}
+//				byte[] p1geno = genos.genotypeAllSites(parentProgenyMap[i][0]);
+//				byte[] p2geno = genos.genotypeAllSites(parentProgenyMap[i][1]);
+//				byte[] childGeno = genos.genotypeAllSites(parentProgenyMap[i][2]);
+								
 				
 			}
 		}
@@ -352,7 +360,7 @@ public class PedVerification {
 		return accepted;
 	}
 	
-//	public static String getGenotype(GenotypeTable genos, int taxaIndex) {
+//	p	ublic static String getGenotype(GenotypeTable genos, int taxaIndex) {
 //		majA = genos.
 //		byte geno = NucleotideAlignmentConstants.getNucleotideDiploidByte(value);
 //	}
@@ -366,18 +374,45 @@ public class PedVerification {
 		// Match taxa/sample according to the type of cross of the site and give score
 
 		try {
-			ArrayList<GenotypeTable> listOfGenos = ReadFile();
+			if(args.length==0) {
+				System.out.println("No arguments. \nPlease supply .hmp.txt file and pedigree file separated by space.\nFormat: java -jar PedVer.jar <input.hmp.txt> <pedigree_file.txt> <cut-off>");
+			}else if(args.length==3){ //then there must be a provided cut-off
+				if(!(args[0].contains(".hmp.txt") && args[1].contains(".txt") && args[2].contains("."))) {
+					System.out.println("Please use this format: \n\tjava -jar PedVer.jar <input.hmp.txt> <pedigree_file.txt> <cut-off>");
+					start(args[0], args[1], Double.parseDouble(args[2]));
+				}
+			}else if(args.length==2) { //then default, get minimum
+				start(args[0],args[1],0.0);
+			}
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+//		long startTime = System.nanoTime();
+//		long endTime = System.nanoTime();
+//		System.out.println("Took "+(endTime - startTime) + " ns"); 
+	}
+	
+	
+	
+	private static void start(String hmpFile, String pedFile, double cutOff) {
+		ArrayList<Integer> outCrossTaxaIndex;
+		try {
+			ArrayList<GenotypeTable> listOfGenos = ReadFile(hmpFile, pedFile);
 //			GenotypeTable parentGenos = PedigreeFileInfo.getParentsGenoTable();
 			for (int i = 0; i < listOfGenos.size(); i++) {
 				GenotypeTable genos = listOfGenos.get(i);
 				ArrayList<Integer> polyMarkers = GetPolymorphicMarkers(genos);
 				if (polyMarkers.size() != 0) {
 					byte[] crossTypeAllSites = GetCrossType(genos, polyMarkers);
-					byte[][] parentGenotypeAllSites = getParentGenotypeAllSites(genos, polyMarkers, crossTypeAllSites);
+//					byte[][] parentGenotypeAllSites = getParentGenotypeAllSites(genos, polyMarkers, crossTypeAllSites);
 					double[][] scores = getScoresAllTaxa(genos, polyMarkers, crossTypeAllSites);
 					double[] meanScores = getMeanScoresAllTaxa(genos, polyMarkers, scores);
-					ArrayList<Integer> outCrossTaxaIndex = getOutCrossedTaxa(meanScores); //list of outcrossed
-						
+					if(cutOff == 0) {
+						outCrossTaxaIndex = getOutCrossedTaxa(meanScores); //list of outcrossed
+					}else {
+						outCrossTaxaIndex = getOutCrossedTaxa(meanScores, cutOff);
+					}
 //					print(genos, polyMarkers, scores, meanScores, outCrossTaxaIndex);
 					
 					// step 2

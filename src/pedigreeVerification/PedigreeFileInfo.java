@@ -16,10 +16,6 @@ import net.maizegenetics.taxa.TaxaList;
  * */
 
 public class PedigreeFileInfo {
-	/*
-	 * getFilteredGenotypeTable() Returns genotype table that has been filtered
-	 * Currently returns F1 and BC1F1 samples
-	 */
 	private static GenotypeTable genos;
 	private static ArrayList<ArrayList<String>> taxaInfo;
 
@@ -51,7 +47,7 @@ public class PedigreeFileInfo {
 						progenyParentMap[i][0] = p1index;
 						progenyParentMap[i][1] = p2index;
 						progenyParentMap[i][2] = childIndex;
-						System.out.println(childIndex + genos.taxaName(childIndex) + ": " + p1name + " " + p2name);
+//						System.out.println(childIndex + genos.taxaName(childIndex) + ": " + p1name + " " + p2name);
 
 //						System.out.println(genos.taxaName(p1index) + " " + genos.taxaName(p2index));
 				}
@@ -60,8 +56,7 @@ public class PedigreeFileInfo {
 
 		return progenyParentMap;
 	}
-	
-	
+		
 	private static String getParentName(String parentName) {
 		for(int i = 0; i < taxaInfo.size(); i++) {
 			if(parentName.trim().equals(taxaInfo.get(i).get(1).trim())) {
@@ -121,15 +116,14 @@ public class PedigreeFileInfo {
 		return parentGenos;
 	}
 
-	public static ArrayList<GenotypeTable> getFilteredGenotypeTable() {
-		String dir = "/home/cloud/Documents/irri/sampleData/";
-		String genotype_file = dir + "qc2.geno.hmp.txt";
-		String genotype_file_info = dir + "qc2.sample_no_spaces.txt";
+	public static ArrayList<GenotypeTable> getFilteredGenotypeTable(String hmpFile, String pedFile) {
+		String genotype_file = hmpFile;
+		String genotype_file_info = pedFile;
 
-		return readGenotypeTable(dir, genotype_file, genotype_file_info);
+		return readGenotypeTable(genotype_file, genotype_file_info);
 	}
 
-	private static ArrayList<GenotypeTable> readGenotypeTable(String dir, String genotype_file,
+	private static ArrayList<GenotypeTable> readGenotypeTable(String genotype_file,
 			String genotype_file_info) {
 		// READ GENOTYPE FILE INFORMATION // SAMPLES
 		taxaInfo = new ArrayList<ArrayList<String>>();
@@ -153,7 +147,7 @@ public class PedigreeFileInfo {
 			}
 
 			buf.close();
-		} catch (FileNotFoundException e) {
+		} catch (FileNotFoundException e) {	
 			System.out.println("File not found!");
 		} catch (IOException e) {
 			System.out.println("Error reading file.");
