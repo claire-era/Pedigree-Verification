@@ -19,15 +19,14 @@ This project aims to identify which of the given F1 samples are true progenies.
 1. Clone the repository by either calling `git clone https://github.com/InternationalRiceResearchInstitute/Pedigree-Verification` in the terminal <strong>OR</strong> clicking the `clone repository` button above.
 2. Navigate to the location of the folder <strong>Pedigree-Verification</strong>.
 
-##### Two Ways of Execution
+### Two Ways of Execution
                 
-	- `java -jar <.hmp.txt> <pedigree_file.txt>`
-    - `java -jar <.hmp.txt> <pedigree_file.txt> <cut_off>`
-
-    Or edit the script and run 
-    - `./start_default.sh` 
-	 or 
-	- `./start_cutoff.sh`
+- `java -jar <.hmp.txt> <pedigree_file.txt>`
+- `java -jar <.hmp.txt> <pedigree_file.txt> <cut_off>`
+Or edit the script and run 
+- `./start_default.sh` 
+or 
+- `./start_cutoff.sh`
 
 ##### Notes
 - `cut_off` should be of data type `double`.
