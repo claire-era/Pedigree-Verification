@@ -19,6 +19,9 @@ This project aims to identify which of the given F1 samples are true progenies.
 1. Clone the repository by either calling `git clone https://github.com/InternationalRiceResearchInstitute/Pedigree-Verification` in the terminal <strong>OR</strong> clicking the `clone repository` button above.
 2. Navigate to the location of the folder <strong>Pedigree-Verification</strong>.
 
+### Installing tassel-5-src
+1. Open a terminal and run `git clone https://bitbucket.org/tasseladmin/tassel-­5-­source.git tassel5-­src`
+
 ### Two Ways of Execution
                 
 - `java -jar <.hmp.txt> <pedigree_file.txt>`
