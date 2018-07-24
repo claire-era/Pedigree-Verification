@@ -22,8 +22,6 @@ public class PedVerification {
 				polyMarkers.add(site);
 			}
 		}
-		
-
 		return polyMarkers;
 	}
 
@@ -288,16 +286,21 @@ public class PedVerification {
 		// get minimum scores
 		for (int i = 0; i < meanScores.length; i++) {
 			if (meanScores[i] < meanScores[minIndex]) {
-//				if (minIndex == 0 && ) {
-//					indices.remove(minIndex);
-//				}
 				minIndex = i;
 				indices.add(minIndex);
 			} else if (meanScores[i] == meanScores[minIndex]) {
 				indices.add(i);
 			}
 		}
-
+		
+		
+		for (int i = 0; i < meanScores.length; i++) {
+			if(meanScores[0] > meanScores[i]) {
+				indices.remove(0);
+				break;
+			}
+		}
+		
 		return indices;
 	}
 
@@ -307,60 +310,136 @@ public class PedVerification {
 																							// cutOff
 		double lim = (double) cutOff;
 		ArrayList<Integer> indices = new ArrayList<Integer>();
-		byte minIndex = 0;
-
-		// get minimum scores
+		int minIndex = 0;
+		
 		for (int i = 0; i < meanScores.length; i++) {
-			System.out.println(meanScores[i]);
-			if (meanScores[i] < meanScores[minIndex]) {
-				if (meanScores[i] < lim)
-					continue;
-				if (indices.contains((int) minIndex)) {
-					indices.remove(minIndex);
-				}
-				minIndex = (byte) i;
-				indices.add(i);
+			if (meanScores[i] >= lim) {
+				minIndex = i;
+				indices.add(minIndex);
 			} else if (meanScores[i] == meanScores[minIndex]) {
 				indices.add(i);
+			}
+		}
+		
+		
+		for (int i = 0; i < meanScores.length; i++) {
+			if(meanScores[0] < lim) {
+				indices.remove(0);
+				break;
 			}
 		}
 
 		return indices;
 	}
 
-	private static boolean[] verifyParentProgenyGenotype(GenotypeTable genos, ArrayList<Integer> outCrossTaxaIndex, ArrayList<Integer> polyMarkers) {
-		
-		boolean[] accepted = new boolean[outCrossTaxaIndex.size()];
+	private static boolean[][] verifyParentProgenyGenotype(GenotypeTable genos, ArrayList<Integer> outCrossTaxaIndex, ArrayList<Integer> polyMarkers) {
+		System.out.println(polyMarkers.size() + " " + outCrossTaxaIndex.size());
+		boolean[][] accepted = new boolean[polyMarkers.size()][outCrossTaxaIndex.size()];
 		int[][] parentProgenyMap = PedigreeFileInfo.progenyGroupToParentMapping(genos, outCrossTaxaIndex);
-		
+		GenotypeTable genosg = PedigreeFileInfo.getGenotypeTable();
+		int site = 0, taxa = 0;
+		int l = 0, t = 0;
 		for(int i = 0; i < parentProgenyMap.length; i++) {
-			for(int j = 0; j < parentProgenyMap[0].length; j++) { //[0] - parent 1; [1] - parent 2
-//				if(j == 0) { // parent 1
-//					
-//				}else if(j == 1) { //parent 2
-//					
-//				}else if(j == 2) { //child
-//					
-//				}
-				
-//				byte p1geno = genos.genoty;
-//				if(parentProgenyMap[i][0] == 0) {
-//					System.out.println("MISSING");
-//					
-//				}
+				while(l<polyMarkers.size() && t < outCrossTaxaIndex.size()) {
+					site = polyMarkers.get(l);
+					taxa = outCrossTaxaIndex.get(t);
+					String p1geno = genosg.genotypeAsString(parentProgenyMap[i][0], site);
+					String p2geno = genosg.genotypeAsString(parentProgenyMap[i][1], site);
+					String childGeno = genosg.genotypeAsString(parentProgenyMap[i][2], site);
+					
+					String majA = genos.majorAlleleAsString(l);
+					String minA = genos.minorAlleleAsString(l);
+					if(genosg.isHeterozygous(parentProgenyMap[i][2], site)) { //Aa 
+						if(p1geno == childGeno) { //if parent and child genotypes are equal, determine if maj or min
+							//accepts AA, Aa, aa parents
+							if(genosg.isHeterozygous(parentProgenyMap[i][0], site)){ //AA
+								//accept this (taxa,site)
+//								accepted[site][taxa] = true;
+							}
+							else if(p1geno.toLowerCase().contains(minA.toLowerCase()))  { //aa
+								//accept
+							}
+							else if(p1geno.toLowerCase().contains(majA.toLowerCase()))  { //Aa
+								//accept
+							}
+						}
+						if(p2geno == childGeno) {
+							if(genosg.isHeterozygous(parentProgenyMap[i][1], site))  { //AA
+								
+							}
+							else if(p2geno.toLowerCase().contains(minA.toLowerCase()))  { //aa
+								
+							}
+							else if((p2geno.toLowerCase().contains(majA.toLowerCase())))  { //aa
+								
+							}
+						}
+					}
+					else if(childGeno.toLowerCase().contains(majA.toLowerCase()))  { //AA
+						if(p1geno == childGeno) { //if parent and child genotypes are equal, determine if maj or min
+							//accepts AA, AA as parents. REJECTS aa
+							if(genosg.isHeterozygous(parentProgenyMap[i][0], site)){ //AA
+								
+							}
+							else if(p1geno.toLowerCase().contains(minA.toLowerCase()))  { //aa
+								
+							}
+							else if(p1geno.toLowerCase().contains(majA.toLowerCase()))  { //Aa
+								
+							}
+						}
+						if(p2geno == childGeno) {
+							if(genosg.isHeterozygous(parentProgenyMap[i][1], site))  { //AA
+								 
+							}
+							else if(p2geno.toLowerCase().contains(minA.toLowerCase()))  { //aa
+								
+							}
+							else if((p2geno.toLowerCase().contains(majA.toLowerCase())))  { //aa
+								
+							}
+						}
+					}
+					else if(childGeno.toLowerCase().contains(minA.toLowerCase())) { //aa
+						if(p1geno == childGeno) { //if parent and child genotypes are equal, determine if maj or min
+							if(genosg.isHeterozygous(parentProgenyMap[i][0], site)){ //AA
+								//reject
+							}
+							else if(p1geno.toLowerCase().contains(minA.toLowerCase()))  { //aa
+								//accept
+							}
+							else if(p1geno.toLowerCase().contains(majA.toLowerCase()))  { //Aa
+								//accept
+							}
+						}
+						if(p2geno == childGeno) {
+							if(genosg.isHeterozygous(parentProgenyMap[i][1], site))  { //AA
+								
+							}
+							else if(p2geno.toLowerCase().contains(minA.toLowerCase()))  { //aa
+								
+							}
+							else if((p2geno.toLowerCase().contains(majA.toLowerCase())))  { //aa
+								
+							}
+						}
+					}
+					l++;
+					t++;
+				}
 //				byte[] p1geno = genos.genotypeAllSites(parentProgenyMap[i][0]);
 //				byte[] p2geno = genos.genotypeAllSites(parentProgenyMap[i][1]);
 //				byte[] childGeno = genos.genotypeAllSites(parentProgenyMap[i][2]);
 								
 				
-			}
+			
 		}
 		
 		
 		return accepted;
 	}
 	
-//	p	ublic static String getGenotype(GenotypeTable genos, int taxaIndex) {
+//	public static String getGenotype(GenotypeTable genos, int taxaIndex) {
 //		majA = genos.
 //		byte geno = NucleotideAlignmentConstants.getNucleotideDiploidByte(value);
 //	}
@@ -377,10 +456,7 @@ public class PedVerification {
 			if(args.length==0) {
 				System.out.println("No arguments. \nPlease supply .hmp.txt file and pedigree file separated by space.\nFormat: java -jar PedVer.jar <input.hmp.txt> <pedigree_file.txt> <cut-off>");
 			}else if(args.length==3){ //then there must be a provided cut-off
-				if(!(args[0].contains(".hmp.txt") && args[1].contains(".txt") && args[2].contains("."))) {
-					System.out.println("Please use this format: \n\tjava -jar PedVer.jar <input.hmp.txt> <pedigree_file.txt> <cut-off>");
-					start(args[0], args[1], Double.parseDouble(args[2]));
-				}
+				start(args[0], args[1], Double.parseDouble(args[2]));
 			}else if(args.length==2) { //then default, get minimum
 				start(args[0],args[1],0.0);
 			}
@@ -395,10 +471,21 @@ public class PedVerification {
 	
 	
 	
-	private static void start(String hmpFile, String pedFile, double cutOff) {
+	private static void start(String hmpFile, String pedFile, double cutOff) throws InterruptedException {
 		ArrayList<Integer> outCrossTaxaIndex;
+		System.out.println("Cut-off: " +  cutOff);
+		Thread.sleep(1000);
+		System.out.println("Loading HapMap file...");
+		Thread.sleep(1000);
+		System.out.println("Loading pedigree file...");
+		Thread.sleep(1000);
+		System.out.println("Getting outcrosses...");
+		Thread.sleep(100);
+
+		
 		try {
 			ArrayList<GenotypeTable> listOfGenos = ReadFile(hmpFile, pedFile);
+			ArrayList<String> keys = PedigreeFileInfo.getKeys();
 //			GenotypeTable parentGenos = PedigreeFileInfo.getParentsGenoTable();
 			for (int i = 0; i < listOfGenos.size(); i++) {
 				GenotypeTable genos = listOfGenos.get(i);
@@ -413,15 +500,20 @@ public class PedVerification {
 					}else {
 						outCrossTaxaIndex = getOutCrossedTaxa(meanScores, cutOff);
 					}
-//					print(genos, polyMarkers, scores, meanScores, outCrossTaxaIndex);
+					
+					print(genos, polyMarkers, scores, meanScores, outCrossTaxaIndex, i, keys);
 					
 					// step 2
 					// boolean 2d array of every accepted F1, (or taxa indices of outCrossTaxaIndex)
-					boolean[] acceptedTaxa = verifyParentProgenyGenotype(genos, outCrossTaxaIndex, polyMarkers);
+//					boolean[][] acceptedTaxa = verifyParentProgenyGenotype(genos, outCrossTaxaIndex, polyMarkers);
 //					break;
 					
 				}	
 			}
+			
+
+			System.out.println("... Done.");
+			Thread.sleep(500);
 			
 
 			long startTime = System.nanoTime();
@@ -435,7 +527,7 @@ public class PedVerification {
 		}
 	}
 	private static void print(GenotypeTable genos, ArrayList<Integer> polyMarkers, double[][] scores, double[] meanScores,
-			ArrayList<Integer> outCrossTaxaIndex) {
+			ArrayList<Integer> outCrossTaxaIndex, int currGroup, ArrayList<String> keys) throws InterruptedException {
 //		System.out.print("\t");
 //		for(int d = 0; d < genos.numberOfTaxa(); d++) {
 //			System.out.print(genos.taxaName(d) + " ");
@@ -451,18 +543,24 @@ public class PedVerification {
 //			System.out.print("\n");
 //		}
 //		
-//		System.out.print("\n");
-//
-//		for (int c = 0; c < meanScores.length; c++) {
-//			System.out.println(genos.taxaName(c) + ": " + meanScores[c]);
-//		}
-//
 		System.out.print("\n");
 
-		System.out.println("Out-Crossed: ");
+		for (int c = 0; c < meanScores.length; c++) {
+			System.out.println(genos.taxaName(c) + ": " + meanScores[c]);
+		}
+//
+		System.out.print("\n");
+		System.out.print(keys.get(currGroup).toUpperCase() + " ");
+		
+		System.out.println("Out-Crossed: \n");
+
 		for(int i = 0; i < outCrossTaxaIndex.size(); i++) {
 			System.out.println(genos.taxaName(outCrossTaxaIndex.get(i)));
 		}
+		
+//		Thread.sleep(1000);
+		
+		System.out.println("_________________________________");
 
 	}
 

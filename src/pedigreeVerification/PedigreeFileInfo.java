@@ -18,6 +18,7 @@ import net.maizegenetics.taxa.TaxaList;
 public class PedigreeFileInfo {
 	private static GenotypeTable genos;
 	private static ArrayList<ArrayList<String>> taxaInfo;
+	private static HashMap<String, ArrayList<Integer>> taxaPerGroup;
 
 	public static int[][] progenyGroupToParentMapping(GenotypeTable currGenos, ArrayList<Integer> outCrossTaxaIndex) {
 		String p1name;
@@ -162,7 +163,7 @@ public class PedigreeFileInfo {
 
 //		passArrayList(genos, taxaInfo);
 		// GET GROUPS
-		HashMap<String, ArrayList<Integer>> taxaPerGroup = sampleByGroup(genos, taxaInfo);
+		taxaPerGroup = sampleByGroup(genos, taxaInfo);
 
 		ArrayList<GenotypeTable> listOfGenos = compareGenotypeFiles(genos, taxaInfo, taxaPerGroup);
 		return listOfGenos;
@@ -188,7 +189,7 @@ public class PedigreeFileInfo {
 			ArrayList<Integer> indices = new ArrayList<Integer>();
 			for (int l = 1; l < currTaxa.size(); l++) {
 				String dname = currTaxa.get(l).getName().toLowerCase();
-				if (dname.contains(gname) && !(taxaPerGroup.containsKey(gname))) {
+				if (dname.trim().contains(gname.trim()+"-") && !(taxaPerGroup.containsKey(gname))) {
 					indices.add(l);
 				}
 			}
@@ -207,7 +208,7 @@ public class PedigreeFileInfo {
 			ArrayList<ArrayList<String>> taxaInfo, HashMap<String, ArrayList<Integer>> taxaPerGroup) {
 		ArrayList<GenotypeTable> listOfGenos = new ArrayList<GenotypeTable>();
 		TaxaList currTaxa = genos.taxa();
-//		boolean isF1_or_BC1F1 = false;
+		boolean isF1_or_BC1F1 = false;
 
 		for (String groupName : taxaPerGroup.keySet()) {
 			ArrayList<Integer> arr = taxaPerGroup.get(groupName);
@@ -215,11 +216,12 @@ public class PedigreeFileInfo {
 																// GetPollinationType.java (1 sample group per run)
 			for (int taxonIndex = 0; taxonIndex < arr.size(); taxonIndex++) {
 				int t = arr.get(taxonIndex); //////////////////////////////
-//				isF1_or_BC1F1 = matchGermplasmType(genos, taxaInfo, t);
-//				if (isF1_or_BC1F1) {
-//					System.out.println("trueee");
-////					keepTaxa.add(currTaxa.get(taxonIndex));
-//				}
+				isF1_or_BC1F1 = matchGermplasmType(PedigreeFileInfo.genos, taxaInfo, taxonIndex);
+				if (isF1_or_BC1F1) {
+					System.out.println("trueee");
+					keepTaxa.add(currTaxa.get(t));
+					continue;
+				}
 				keepTaxa.add(currTaxa.get(t));
 			}
 			GenotypeTable filtered = FilterGenotypeTable.getInstance(genos, keepTaxa, false);
@@ -237,13 +239,28 @@ public class PedigreeFileInfo {
 		int k = 0;
 
 		while (k < taxaInfo.size()) {
-			if (taxaInfo.get(k).get(0).matches(currTaxa.get(i).getName())) {
-				if (taxaInfo.get(k).get(3).matches("F1") || taxaInfo.get(k).get(3).matches("BC1F1"))
+			if (taxaInfo.get(k).get(0).matches(currTaxa.get(taxonIndex).getName())) {
+				if (taxaInfo.get(k).get(3).matches("F1") || taxaInfo.get(k).get(3).matches("BC1F1")) {
 					return true;
+				}
+				else return false;
 			}
 			k++;
 		}
 		return false;
+	}
+	
+	
+	public static GenotypeTable getGenotypeTable() {
+		return genos;
+	}
+	
+	public static ArrayList<String> getKeys() {
+		ArrayList<String> keys = new ArrayList<String>();
+		for(String key: taxaPerGroup.keySet()) {
+			keys.add(key);
+		}
+		return keys;
 	}
 
 	public static void main(String[] args) {
