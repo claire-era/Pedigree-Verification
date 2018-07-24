@@ -1,5 +1,5 @@
 
-This is a CLI based Java ARchive (.JAR) file for verifying progenies. This is made for the [International Rice Research Institute](http://irri.org/) for the internship project, <br><strong>Pedigree Verification.</strong>
+This is a CLI based Java ARchive (.JAR) file for verifying progenies. This is made for the [International Rice Research Institute](http://irri.org/) for the internship project, <strong>Pedigree Verification.</strong>
 
 ## Table of Contents
 
