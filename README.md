@@ -7,7 +7,7 @@ This is a CLI based Java ARchive (.JAR) file for verifying progenies. This is ma
 - [Dependencies](#dependencies)
 - [Limitations](#limitations)
 - [For Developers](#for-developers)
-- [About the Developers](#about-the-developers)
+- [About the Developer](#about-the-developer)
 
 ## Description
 This project aims to identify which of the given F1 samples are true progenies.
