@@ -10,7 +10,7 @@ This is a CLI based Java ARchive (.JAR) file for verifying progenies. This is ma
 - [About the Developer](#about-the-developer)
 
 ## Description
-This project aims to identify which of the given F1 samples are true progenies.
+This project aims to identify which of the given F1 samples are true progenies. <strong>Current version: Only produces true out-crosses. Parent-to-offspring match is to follow.</strong>
 
 ## Dependencies
 - This repository (Pedigree-Verification)
@@ -20,7 +20,7 @@ This project aims to identify which of the given F1 samples are true progenies.
 2. Navigate to the location of the folder <strong>Pedigree-Verification</strong>.
 
 ### Installing tassel-5-src
-1. Open a terminal and run `git clone https://bitbucket.org/tasseladmin/tassel-­5-­source.git tassel5-­src`
+1. Open a terminal, navigate to the location of the repository and run `git clone https://bitbucket.org/tasseladmin/tassel-­5-­source.git tassel5-­src`
 
 ### Two Ways of Execution
                 
