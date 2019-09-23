@@ -39,10 +39,38 @@ public class Step1 {
 	
 	private static ArrayList<Integer> GetCrossType(GenotypeTable genos){
 		ArrayList<Integer> ct = new ArrayList<Integer>();
-		
 		ArrayList<Integer> polymarkers = GetPolymorphicMarkers(genos);
-		System.out.println(polymarkers);
+		int psite;
+		double p, q, X, Y, Z;
+		int N;
+		double[] observed = new double[3];
+		double[] expected1 = {0,1,0};
+		double[] expected2 = {0.5,0.5,0};
+		double[][] result;
 		
+		for(int i = 0; i < polymarkers.size(); i++) {
+			psite = polymarkers.get(i);
+			p = genos.majorAlleleFrequency(psite);
+			q = genos.minorAlleleFrequency(psite);
+			N = genos.numberOfTaxa();
+			Y = genos.heterozygousCount(psite);
+			X = ((2*N*p) - Y)/2;
+			Z = ((2*N*q) - Y)/2;
+			X = X/N;
+			Z = Z/N;
+			Y = Y/N;
+			
+			//CLASSIFY IF: TYPE 1 or 2
+			//APPLY FISHER'S TEST to see if observed values correspond with the exact values
+			observed[0] = X;
+			observed[1] = Y;
+			observed[2] = Z;
+			
+//			System.out.println(observed[0]+" : "+observed[1]+" : "+observed[2]);
+//			result = ChiSquare(expected1, observed);
+			FisherExact fishers_test = new FisherExact(N);
+			System.out.println(fishers_test.getP(10, 0, 5, 4));
+ 		}
 		
 
 		return null;
