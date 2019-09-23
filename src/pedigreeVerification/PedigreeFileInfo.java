@@ -218,7 +218,7 @@ public class PedigreeFileInfo {
 				int t = arr.get(taxonIndex); //////////////////////////////
 				isF1_or_BC1F1 = matchGermplasmType(PedigreeFileInfo.genos, taxaInfo, taxonIndex);
 				if (isF1_or_BC1F1) {
-					System.out.println("trueee");
+//					System.out.println("trueee");
 					keepTaxa.add(currTaxa.get(t));
 					continue;
 				}

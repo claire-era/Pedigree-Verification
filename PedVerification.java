@@ -18,9 +18,7 @@ public class PedVerification {
 		int numOfSites = genos.numberOfSites(); // for 0-indexing
 
 		for (int site = 0; site < numOfSites; site++) {
-			if (genos.isPolymorphic(site)) {
-				polyMarkers.add(site);
-			}
+			if (genos.isPolymorphic(site))	polyMarkers.add(site);
 		}
 		return polyMarkers;
 	}
