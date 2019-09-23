@@ -68,8 +68,8 @@ public class Step1 {
 			
 //			System.out.println(observed[0]+" : "+observed[1]+" : "+observed[2]);
 //			result = ChiSquare(expected1, observed);
-			FisherExact fishers_test = new FisherExact(N);
-			System.out.println(fishers_test.getP(10, 0, 5, 4));
+//			FisherExact fishers_test = new FisherExact(N);
+//			System.out.println(fishers_test.getP(10, 0, 5, 4));
  		}
 		
 
