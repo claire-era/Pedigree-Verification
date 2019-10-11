@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import org.rosuda.JRI.Rengine;
+
 import net.maizegenetics.dna.snp.GenotypeTable;
 import net.maizegenetics.dna.snp.ImportUtils;
 import net.maizegenetics.dna.snp.NucleotideAlignmentConstants;
@@ -61,35 +63,69 @@ public class Step1 {
 		
 		return taxa;
 	}
+	
+	private static Double getPvalue(double[] observed, double[] expected) {
+		Rengine re = new Rengine(null, false, null);
+		Double pval = null;
+		try {
+			String sample_m = "matrix(c(3, 1, 1, 3), nrow = 2, dimnames = list(Guess = c(\"Milk\", \"Tea\"),Truth = c(\"Milk\", \"Tea\")))";
+			re.eval("TeaTasting=" + sample_m);
+			re.eval("result=fisher.test(TeaTasting, alternative = \"greater\")");
+			pval = re.eval("result$p.value").asDouble();
+//			System.out.println("P-value is = " + pval);
+		} catch (Exception e) {
+		}
+//		re.interrupt();
+		re.end();
+//		re.
+//		System.out.println(pval);
+		return pval;
+	}
 
 	private static ArrayList<Integer> GetCrossType(GenotypeTable genos) {
 		ArrayList<Integer> ct = new ArrayList<Integer>(); //CROSS TYPE / ALLELE COMBINATION after function
 		ArrayList<Integer> polymarkers = GetPolymorphicMarkers(genos);
 		ArrayList<Integer> initTaxaSol = getInitSolution(polymarkers); //generated initial solution after good marker selection //taxa indices of initial solution
 		int psite;
-		int nSites = genos.numberOfSites();
+		int nCountSites = genos.numberOfSites();
+		int pCountSites = polymarkers.size();
+		int initSolTaxa = initTaxaSol.size();
 		double p, q, X, Y, Z;
 		int N;
-		double[] observed = new double[3];
-		double[] expected1 = { 0, 1, 0 };
-		double[] expected2 = { 0.5, 0.5, 0 };
+//		double[] observed = new double[3];
+		double[] expected1 = { 0, initSolTaxa, 0 }; //ASSUMPTION: ALL SAMPLES ARE HET (Segregation: AA x aa) 100% het
+		double[] expected2 = { initSolTaxa/2, initSolTaxa/2, 0 }; //ASSUMPTION: HALF ARE HET AND HALF ARE HOMO DOMINANT (Segregation: AA x Aa) 50% self 50% het
 		double[][] result;
 		
-		for(int i = 0; i < initTaxaSol.size(); i++) {
-			for(int site = 0; site < nSites; site++) {
+//		for(int i = 0; i < initTaxaSol.size(); i++) {
+			for(int site = 0; site < nCountSites; site++) {
 				//use f-test for expected and observed values for each SNP only in the samples listed 
+//				psite = polymarkers.get(site);
+				p = genos.majorAlleleFrequency(site);
+				q = genos.minorAlleleFrequency(site);
+				N = genos.numberOfTaxa();
+				Y = genos.heterozygousCount(site); //HETEROZYGOUS
+				X = ((2 * N * p) - Y) / 2; //HOMOZYGOUS DOM
+				Z = ((2 * N * q) - Y) / 2; //HOMOZYGOUS REC
+//				X = X / N;
+//				Z = Z / N;
+//				Y = Y / N;
+				
+				double[] observed = {X,Y,Z};
+				double pval_type1 = Step1.getPvalue(observed, expected1);
+				double pval_type2 = Step1.getPvalue(observed, expected2);
+				System.out.println(pval_type1 + " " + pval_type2);
 			}
-		}
-//
+//		}
+
 //		for (int i = 0; i < polymarkers.size(); i++) {
 //			psite = polymarkers.get(i);
-//			System.out.println(psite);
-////			p = genos.majorAlleleFrequency(psite);
+//			p = genos.majorAlleleFrequency(psite);
 //			q = genos.minorAlleleFrequency(psite);
 //			N = genos.numberOfTaxa();
-//			Y = genos.heterozygousCount(psite);
-//			X = ((2 * N * p) - Y) / 2;
-//			Z = ((2 * N * q) - Y) / 2;
+//			Y = genos.heterozygousCount(psite); //HETEROZYGOUS
+//			X = ((2 * N * p) - Y) / 2; //HOMOZYGOUS DOM
+//			Z = ((2 * N * q) - Y) / 2; //HOMOZYGOUS REC
 //			X = X / N;
 //			Z = Z / N;
 //			Y = Y / N;
