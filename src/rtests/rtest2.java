@@ -1,3 +1,5 @@
+package rtests;
+
 import java.io.*;
 
 import java.awt.*;
@@ -14,7 +16,8 @@ class TextConsole2 implements RMainLoopCallbacks
 	
     public JTextArea textarea = new JTextArea();
 
-    public TextConsole2() {
+    @SuppressWarnings("deprecation")
+	public TextConsole2() {
         f = new JFrame();
         f.getContentPane().add(new JScrollPane(textarea));
         f.setSize(new Dimension(800,600));
