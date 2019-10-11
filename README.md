@@ -8,6 +8,7 @@ This is a CLI based Java ARchive (.JAR) file for verifying progenies. This is ma
 - [Limitations](#limitations)
 - [For Developers](#for-developers)
 - [About the Developer](#about-the-developer)
+- [CHANGE LOG](#change-log)
 
 ## Description
 This project aims to identify which of the given F1 samples are true progenies. <strong>Current version: Only produces true out-crosses. Parent-to-offspring match is to follow.</strong>
@@ -83,3 +84,8 @@ Where:
 ## About the Developer
 This program is made by [Claire Era](https://github.com/claire-era), a student from University of the Philippines - Los Baños.
 
+## CHANGE LOG
+
+- Install rJava and JRI
+- Integrate rJava inside Run Configurations and fix R_HOME Path inside eclipse environment
+- Use of fisher.test() inside JVM
