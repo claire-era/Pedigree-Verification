@@ -89,3 +89,4 @@ This program is made by [Claire Era](https://github.com/claire-era), a student f
 - Install rJava and JRI
 - Integrate rJava inside Run Configurations and fix R_HOME Path inside eclipse environment
 - Use of fisher.test() inside JVM
+- Removed depracated functions in SMTPClient.java
