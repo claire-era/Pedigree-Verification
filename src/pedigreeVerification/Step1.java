@@ -108,64 +108,35 @@ public class Step1 {
 		ArrayList<Integer> initTaxaSol = getInitSolution(polymarkers); // generated initial solution after good marker
 																		// selection //taxa indices of initial solution
 		Rengine re = new Rengine(null, false, null);
-		int psite;
+//		int psite;
 		int nCountSites = genos.numberOfSites();
-		int pCountSites = polymarkers.size();
+//		int pCountSites = polymarkers.size();
 		int initSolTaxa = initTaxaSol.size();
 		double p, q, X, Y, Z;
 		int N;
-//		double[] observed = new double[3];
 		double[] expected1 = { 0, initSolTaxa, 0 }; // ASSUMPTION: ALL SAMPLES ARE HET (Segregation: AA x aa) 100% het
 		double[] expected2 = { initSolTaxa / 2, initSolTaxa / 2, 0 }; // ASSUMPTION: HALF ARE HET AND HALF ARE HOMO
-																		// DOMINANT (Segregation: AA x Aa) 50% self 50%
-																		// het
-		double[][] result;
+																		// DOMINANT (Segregation: AA x Aa) 50% self
 		
-		
-//		for(int i = 0; i < initTaxaSol.size(); i++) {
 		for (int site = 0; site < nCountSites; site++) {
-			// use f-test for expected and observed values for each SNP only in the samples
-			// listed
-//				psite = polymarkers.get(site);
 			p = genos.majorAlleleFrequency(site);
 			q = genos.minorAlleleFrequency(site);
 			N = genos.numberOfTaxa();
 			Y = genos.heterozygousCount(site); // HETEROZYGOUS
 			X = ((2 * N * p) - Y) / 2; // HOMOZYGOUS DOM
 			Z = ((2 * N * q) - Y) / 2; // HOMOZYGOUS REC
-//				X = X / N;
-//				Z = Z / N;
-//				Y = Y / N;
 
 			double[] observed = { X, Y, Z };
+
 			double pval_type1 = Step1.getPvalue(re, observed, expected1);
-			System.out.println("thread " + pval_type1);
-
 			double pval_type2 = Step1.getPvalue(re, observed, expected2);
-			System.out.println(pval_type2 + " asd");
+			
+			int type = (pval_type1 > pval_type2) ? 1 : 2;
+			ct.add(type);
 		}
-//		}
-
-//		for (int i = 0; i < polymarkers.size(); i++) {
-//			psite = polymarkers.get(i);
-//			p = genos.majorAlleleFrequency(psite);
-//			q = genos.minorAlleleFrequency(psite);
-//			N = genos.numberOfTaxa();
-//			Y = genos.heterozygousCount(psite); //HETEROZYGOUS
-//			X = ((2 * N * p) - Y) / 2; //HOMOZYGOUS DOM
-//			Z = ((2 * N * q) - Y) / 2; //HOMOZYGOUS REC
-//			X = X / N;
-//			Z = Z / N;
-//			Y = Y / N;
-//
-//			// CLASSIFY IF: TYPE 1 or 2
-//			// APPLY FISHER'S TEST to see if observed values correspond with the exact val
-//			observed[0] = X;
-//			observed[1] = Y;
-//			observed[2] = Z;
-//		}
-		re.end();
-		return null;
+		
+		re.end(); //END R ENGINE INSTANCE AFTER PERFORMING FISHER'S EXACT TEST ON ALL SITES/SNPS
+		return ct;
 	}
 
 	private static void checkInputs(String[] args) {
