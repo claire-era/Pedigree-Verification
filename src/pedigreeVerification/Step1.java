@@ -150,12 +150,6 @@ public class Step1 {
 		double[] expected5 = {0, initSolTaxa/2, initSolTaxa/2};
 		double[] expected6 = {initSolTaxa/4, initSolTaxa/2, initSolTaxa/4};
 		
-		System.out.println(expected1[0] + " " + expected1[1] + " " + expected1[2]);
-		System.out.println(expected2[0] + " " + expected2[1] + " " + expected2[2]);
-		System.out.println(expected3[0] + " " + expected3[1] + " " + expected3[2]);
-		System.out.println(expected4[0] + " " + expected4[1] + " " + expected4[2]);
-		System.out.println(expected5[0] + " " + expected5[1] + " " + expected5[2]);
-		System.out.println(expected6[0] + " " + expected6[1] + " " + expected6[2]);
 		
 		for (int site = 0; site < nCountSites; site++) {
 			X = countAlleles(initTaxaSol, site, genos, 0); //0 for major allele
@@ -163,7 +157,6 @@ public class Step1 {
 			Y = countAlleles(initTaxaSol, site, genos, 2); // HETEROZYGOUS COUNT
 			
 			double[] observed = { X, Y, Z };
-			System.out.println(observed[0] + " " + observed[1] + " " + observed[2]);
 			
 			double p_t1 = Step1.getPvalue(re, observed, expected1);
 			double p_t2 = Step1.getPvalue(re, observed, expected2);
@@ -174,15 +167,11 @@ public class Step1 {
 			
 			double[] p_arr = {p_t1, p_t2, p_t3, p_t4, p_t5, p_t6};
 			
-//			for(int i = 0; i < p_arr.length; i++) System.out.println(p_arr[i]);
 			//classify: get max between 6 numbers
 			int index_max = getMax(p_arr);
-//			System.out.println("\n");
-			System.out.println(index_max + 1); //for fixing 0-indexing;
-			System.out.println("\n");
-//			System.out.println(value);
-
-//			ct.add(index_max + 1);
+			index_max = index_max + 1; //for fixing 0-indexing, classification
+			
+			ct.add(index_max);
 		}
 		
 		re.end(); //END R ENGINE INSTANCE AFTER PERFORMING fisher.test() ON ALL SITES/SNPS
