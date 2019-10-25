@@ -21,6 +21,9 @@ public class FisherTest {
 			re.eval("result=fisher.test(TeaTasting, alternative = \"greater\")");
 			Double pval = re.eval("result$p.value").asDouble();
 			System.out.println("P-value is = " + pval);
+			System.out.println(pval);
+			re.end();
+			System.out.println(re.isAlive());
 		} catch (Exception e) {
 		}
 	}

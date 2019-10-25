@@ -1,18 +1,11 @@
 package pedigreeVerification;
 
-import java.awt.FileDialog;
-import java.awt.Frame;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 
-import org.rosuda.JRI.REXP;
-import org.rosuda.JRI.RMainLoopCallbacks;
 import org.rosuda.JRI.Rengine;
 
 import net.maizegenetics.dna.snp.GenotypeTable;
 import net.maizegenetics.dna.snp.ImportUtils;
-import net.maizegenetics.dna.snp.NucleotideAlignmentConstants;
 
 public class Step1 {
 	private static ArrayList<GenotypeTable> listOfGenos;
@@ -48,11 +41,14 @@ public class Step1 {
 		for (int i = 1; i < hcArr.length; i++)
 			if (hcArr[i] > max)
 				max = hcArr[i];
+		
 
 		// find all indices of polymorphic markers matching the max value
 		for (site = 0; site < numOfSites; site++)
-			if (genos.isPolymorphic(site) && max == genos.heterozygousCount(site))
+			if (genos.isPolymorphic(site) && max == genos.heterozygousCount(site)) {
 				polyMarkers.add(site);
+			}
+		
 
 		return polyMarkers; // returns index of the location of the polymorphic marker
 	}
@@ -61,9 +57,12 @@ public class Step1 {
 		ArrayList<Integer> taxa = new ArrayList<Integer>();
 
 		int psite = polymarkers.get(0); // get the max site
+//		System.out.println(psite + " psite to ");
 		for (int taxon = 0; taxon < genos.numberOfTaxa(); taxon++)
-			if (genos.isHeterozygous(taxon, psite))
+			if (genos.isHeterozygous(taxon, psite)) {
+//				System.out.println(taxon);
 				taxa.add(taxon); // adds index of a sample included in the initial solution
+			}
 
 		return taxa;
 	}
@@ -93,13 +92,40 @@ public class Step1 {
 		}
 		try {
 			// ----- evaluate string
-			String sample_m = "matrix(" + res + ",nrow = 2)";
+			String sample_m = "matrix(" + res + ",nrow = 3)"; //for each element inside the classification array. expected[0]..[2].
 			re.eval("observed=" + sample_m);
 			re.eval("result=fisher.test(observed, alternative = \"greater\")");
 			pval = re.eval("result$p.value").asDouble();
 		} catch (Exception e) {
 		}
 		return pval;
+	}
+	
+	private static double getMax(double[] arr) { //returns index of max value in an array
+		double max = arr[0];
+		for (int i = 1; i < arr.length; i++)
+			if (arr[i] > max)
+				max = arr[i];
+		return max;
+
+	}
+	
+	private static double countAlleles(ArrayList<Integer> listOftaxa, int site, GenotypeTable genos, int type) {
+		double majCount = 0;
+		double minCount = 0;
+		double hetCount = 0;
+		byte majorAlleleInSite = genos.majorAllele(site);
+		byte minorAlleleInSite = genos.minorAllele(site);
+		
+		for(int i = 0; i < listOftaxa.size(); i++) {
+			int t = listOftaxa.get(i);
+			if(genos.isHeterozygous(t, site)) hetCount++;
+			else if(majorAlleleInSite == genos.genotypeArray(t,site)[1])	majCount++;
+			else if(minorAlleleInSite == genos.genotypeArray(t,site)[1]) minCount++;
+		}
+		if(type == 0) return majCount;
+		else if (type == 1) return minCount;
+		else return hetCount;
 	}
 
 	private static ArrayList<Integer> GetCrossType(GenotypeTable genos) {
@@ -108,35 +134,57 @@ public class Step1 {
 		ArrayList<Integer> initTaxaSol = getInitSolution(polymarkers); // generated initial solution after good marker
 																		// selection //taxa indices of initial solution
 		Rengine re = new Rengine(null, false, null);
-//		int psite;
 		int nCountSites = genos.numberOfSites();
-//		int pCountSites = polymarkers.size();
-		int initSolTaxa = initTaxaSol.size();
-		double p, q, X, Y, Z;
-		int N;
-		double[] expected1 = { 0, initSolTaxa, 0 }; // ASSUMPTION: ALL SAMPLES ARE HET (Segregation: AA x aa) 100% het
-		double[] expected2 = { initSolTaxa / 2, initSolTaxa / 2, 0 }; // ASSUMPTION: HALF ARE HET AND HALF ARE HOMO
-																		// DOMINANT (Segregation: AA x Aa) 50% self
+		double initSolTaxa = initTaxaSol.size();
+		double X, Y, Z;
+		
+		double[] expected1 = {initSolTaxa, 0, 0};
+		double[] expected2 = {0, 0, initSolTaxa};
+		double[] expected3 = {0, initSolTaxa, 0 }; // ASSUMPTION: ALL SAMPLES ARE HET (Segregation: AA x aa) 100% het
+		double[] expected4 = {initSolTaxa / 2, initSolTaxa / 2, 0 }; // ASSUMPTION: HALF ARE HET AND HALF ARE HOMO	// DOMINANT (Segregation: AA x Aa) 50% self
+		double[] expected5 = {0, initSolTaxa/2, initSolTaxa/2};
+		double[] expected6 = {initSolTaxa/4, initSolTaxa/2, initSolTaxa/4};
+		
+		System.out.println(expected1[0] + " " + expected1[1] + " " + expected1[2]);
+		System.out.println(expected2[0] + " " + expected2[1] + " " + expected2[2]);
+		System.out.println(expected3[0] + " " + expected3[1] + " " + expected3[2]);
+		System.out.println(expected4[0] + " " + expected4[1] + " " + expected4[2]);
+		System.out.println(expected5[0] + " " + expected5[1] + " " + expected5[2]);
+		System.out.println(expected6[0] + " " + expected6[1] + " " + expected6[2]);
 		
 		for (int site = 0; site < nCountSites; site++) {
-			p = genos.majorAlleleFrequency(site);
-			q = genos.minorAlleleFrequency(site);
-			N = genos.numberOfTaxa();
-			Y = genos.heterozygousCount(site); // HETEROZYGOUS
-			X = ((2 * N * p) - Y) / 2; // HOMOZYGOUS DOM
-			Z = ((2 * N * q) - Y) / 2; // HOMOZYGOUS REC
-
-			double[] observed = { X, Y, Z };
-
-			double pval_type1 = Step1.getPvalue(re, observed, expected1);
-			double pval_type2 = Step1.getPvalue(re, observed, expected2);
+			X = countAlleles(initTaxaSol, site, genos, 0); //0 for major allele
+			Z = countAlleles(initTaxaSol, site, genos, 1); //1 for minor allele
+			Y = countAlleles(initTaxaSol, site, genos, 2); // HETEROZYGOUS COUNT
 			
-			int type = (pval_type1 > pval_type2) ? 1 : 2;
-			ct.add(type);
+			double[] observed = { X, Y, Z };
+			System.out.println(observed[0] + " " + observed[1] + " " + observed[2]);
+			
+			double p_t1 = Step1.getPvalue(re, observed, expected1);
+			double p_t2 = Step1.getPvalue(re, observed, expected2);
+			double p_t3 = Step1.getPvalue(re, observed, expected3);
+			double p_t4 = Step1.getPvalue(re, observed, expected4);
+			double p_t5 = Step1.getPvalue(re, observed, expected5);
+			double p_t6 = Step1.getPvalue(re, observed, expected6);
+			
+			double[] p_arr = {p_t1, p_t2, p_t3, p_t4, p_t5, p_t6};
+			
+//			for(int i = 0; i < p_arr.length; i++) System.out.println(p_arr[i]);
+			//classify: get max between 6 numbers
+			int index_max = (int) getMax(p_arr);
+//			System.out.println("\n");
+//			System.out.println(p_arr[index_max]);
+			System.out.println("\n");
+
+			ct.add(index_max + 1);
 		}
 		
-		re.end(); //END R ENGINE INSTANCE AFTER PERFORMING FISHER'S EXACT TEST ON ALL SITES/SNPS
+		re.end(); //END R ENGINE INSTANCE AFTER PERFORMING fisher.test() ON ALL SITES/SNPS
 		return ct;
+	}
+	
+	private static void InferGenotype(GenotypeTable genos, ArrayList<Integer> crossType) {
+		
 	}
 
 	private static void checkInputs(String[] args) {
@@ -173,7 +221,10 @@ public class Step1 {
 
 			// IMPLEMENT STEP 1
 			genos = Step1.ReadHMPFile(hmpFile);
-			Step1.GetCrossType(genos);
+			ArrayList<Integer> crossType = Step1.GetCrossType(genos);
+			Step1.InferGenotype(genos, crossType);
+			
+//			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));
 
 			ProgramEnded();
 		} catch (Exception e) {
