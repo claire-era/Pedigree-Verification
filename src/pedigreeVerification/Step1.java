@@ -101,12 +101,17 @@ public class Step1 {
 		return pval;
 	}
 	
-	private static double getMax(double[] arr) { //returns index of max value in an array
+	private static int getMax(double[] arr) { //returns index of max value in an array
 		double max = arr[0];
-		for (int i = 1; i < arr.length; i++)
-			if (arr[i] > max)
+		int i = 0;
+		int max_i = 0;
+		for (i = 1; i < arr.length-1; i++)
+			if (arr[i] > max) {
 				max = arr[i];
-		return max;
+				max_i = i;
+			}
+//		System.out.println(i);
+		return max_i;
 
 	}
 	
@@ -171,12 +176,13 @@ public class Step1 {
 			
 //			for(int i = 0; i < p_arr.length; i++) System.out.println(p_arr[i]);
 			//classify: get max between 6 numbers
-			int index_max = (int) getMax(p_arr);
+			int index_max = getMax(p_arr);
 //			System.out.println("\n");
-//			System.out.println(p_arr[index_max]);
+			System.out.println(index_max + 1); //for fixing 0-indexing;
 			System.out.println("\n");
+//			System.out.println(value);
 
-			ct.add(index_max + 1);
+//			ct.add(index_max + 1);
 		}
 		
 		re.end(); //END R ENGINE INSTANCE AFTER PERFORMING fisher.test() ON ALL SITES/SNPS
