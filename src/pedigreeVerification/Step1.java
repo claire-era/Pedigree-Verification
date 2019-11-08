@@ -183,12 +183,12 @@ public class Step1 {
 	private static byte[][][] InferGenotype(GenotypeTable genos, ArrayList<Integer> crossType) {
 		//RETURNS BYTE 2D ARRAY OF F1 AND SELF EXPECTED CROSS 
 		// for every case, there must be some expectation to be followed
-		byte[][][] exp = new byte[2][6][2]; //return value
-		byte[] exp_f1 = new byte[2]; //exp0 holds higher/major bit,1 holds lower/min/het
-		byte[] exp_self = new byte[2];
+		byte[][][] exp = new byte[2][crossType.size()][2]; //return value
 		byte majAllele;
 		byte minAllele;
 		for(int site = 0; site < crossType.size(); site++) { //for each SNP, with corresponding crosstype
+			byte[] exp_f1 = new byte[2]; //exp0 holds higher/major bit,1 holds lower/min/het
+			byte[] exp_self = new byte[2];
 			int cross = crossType.get(site); //get crosstype per site
 			majAllele = genos.majorAllele(site);
 			minAllele = genos.minorAllele(site);
@@ -213,30 +213,60 @@ public class Step1 {
 				exp_self[1] = majAllele;
 			}else if(cross == 4) { //MAJOR x HET
 				exp_f1[0] = majAllele; //doblehin mo nalang sis
-				exp_f1[1] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
+				exp_f1[1] = GenotypeTableUtils.getDiploidValue(majAllele, minAllele);
 //				System.out.println(NucleotideAlignmentConstants.getNucleotideIUPAC(exp_f1[1]));
 				
-				exp_self[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);;
+				exp_self[0] = GenotypeTableUtils.getDiploidValue(majAllele, minAllele);;
 				exp_self[1] = exp_self[0];
 			}else if(cross == 5) { //HET X MINOR
-				exp_f1[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
+				exp_f1[0] = GenotypeTableUtils.getDiploidValue(majAllele, minAllele);
 				exp_f1[1] = minAllele;
 				
 				exp_self[0] = majAllele;
 				exp_self[1] = majAllele;
 			}else if(cross == 6) { //HET X HET
-				exp_f1[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
+				exp_f1[0] = GenotypeTableUtils.getDiploidValue(majAllele, minAllele);
 				exp_f1[1] = exp_f1[0];
 				
-				exp_self[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);;
+				exp_self[0] = GenotypeTableUtils.getDiploidValue(majAllele, minAllele);;
 				exp_self[1] = exp_self[0];
 			}
 			//STORE INSIDE RETURN ARRAY impose 0-indexing
-			exp[0][cross-1] = exp_f1;
-			exp[1][cross-1] = exp_self;
+			exp[0][site] = exp_f1;
+			exp[1][site] = exp_self;
 		}
 		
+//		for(int i = 0; i < crossType.size(); i++) {
+//			System.out.print(NucleotideAlignmentConstants.getNucleotideIUPAC(exp[0][i][0])+NucleotideAlignmentConstants.getNucleotideIUPAC(exp[0][i][1])+" ");
+//		}
+//		System.out.print("\n\n");
+		
 		return exp;
+		
+	}
+	
+	private static void testSolution(GenotypeTable genos, byte[][] exp_f1) {		
+		int count_1 = 0,count_0 = 0;
+		for(int t = 0; t < genos.numberOfTaxa(); t++) {
+			count_1 = 0;
+			count_0 = 0;
+			for(int site = 0; site < genos.numberOfSites(); site++) {
+				byte a1 = exp_f1[site][0]; //first allele
+				byte a2 = exp_f1[site][1]; //second allele
+//				System.out.print(NucleotideAlignmentConstants.getNucleotideIUPAC(a1) + NucleotideAlignmentConstants.getNucleotideIUPAC(a2) + " ");
+//				System.out.print(genos.genotypeAsString(t, site)+" ");
+//					System.out.print("1");
+				
+				//CURRENT: IMPOSITION OF STRICT EQUALITY, WITHOUT CONSIDERATION OF ACCEPTANCE MATRIX 
+				if(GenotypeTableUtils.getDiploidValue(a1,a2) == genos.genotype(t, site)) {
+					count_1++;
+				}else {
+					count_0++;
+				}				
+			}
+			System.out.print("\n");
+			System.out.println((count_1 > count_0) ? "1" : "0");
+		}
 		
 	}
 
@@ -278,12 +308,13 @@ public class Step1 {
 			byte[][][] solution = Step1.InferGenotype(genos, crossType);
 			
 			
-			byte[][] f1ExpPerCross = solution[0]; //FOR SUBROUTINE 3.2a
-			byte[][] selfExpPerCross = solution[1]; //for subroutine 3.2b
+//			byte[][] f1ExpPerCross = solution[0]; //FOR SUBROUTINE 3.2a
+//			byte[][] selfExpPerCross = solution[1]; //for subroutine 3.2b
 			
-			//TEST SOLUTIONS: f1ExpPerCross and selfExpPerCross from slide 28
+			//TEST SOLUTIONS: f1ExpPerCross for subroutine 3.2a
+			testSolution(genos, solution[0]);
 			
-			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));
+//			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));
 			
 						
 			ProgramEnded();
