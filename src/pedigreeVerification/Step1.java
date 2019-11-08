@@ -197,23 +197,39 @@ public class Step1 {
 				exp_f1[0] = majAllele;
 				exp_f1[1] = majAllele;
 				
-				exp_self[0] = ;
+				exp_self[0] = majAllele;
+				exp_self[1] = majAllele;
 			}else if(cross == 2) { //MIN X MIN
 				exp_f1[0] = minAllele;
 				exp_f1[1] = minAllele;
+				
+				exp_self[0] = minAllele;
+				exp_self[1] = minAllele;
 			}else if(cross == 3) { // MAJ X MIN == HET
 				exp_f1[0] = majAllele;
 				exp_f1[1] = minAllele;
+				
+				exp_self[0] = majAllele;
+				exp_self[1] = majAllele;
 			}else if(cross == 4) { //MAJOR x HET
 				exp_f1[0] = majAllele;
 				exp_f1[1] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
 //				System.out.println(NucleotideAlignmentConstants.getNucleotideIUPAC(exp_f1[1]));
- 			}else if(cross == 5) { //HET X MINOR
+				
+				exp_self[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);;
+				exp_self[1] = exp_self[0];
+			}else if(cross == 5) { //HET X MINOR
 				exp_f1[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
 				exp_f1[1] = minAllele;
+				
+				exp_self[0] = majAllele;
+				exp_self[1] = majAllele;
 			}else if(cross == 6) { //HET X HET
 				exp_f1[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
 				exp_f1[1] = exp_f1[0];
+				
+				exp_self[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);;
+				exp_self[1] = exp_self[0];
 			}
 			
 //			System.out.println(genos.genotypeArray(1, 1));
