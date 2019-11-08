@@ -5,7 +5,9 @@ import java.util.ArrayList;
 import org.rosuda.JRI.Rengine;
 
 import net.maizegenetics.dna.snp.GenotypeTable;
+import net.maizegenetics.dna.snp.GenotypeTableUtils;
 import net.maizegenetics.dna.snp.ImportUtils;
+import net.maizegenetics.dna.snp.NucleotideAlignmentConstants;
 
 public class Step1 {
 	private static ArrayList<GenotypeTable> listOfGenos;
@@ -179,6 +181,43 @@ public class Step1 {
 	}
 	
 	private static void InferGenotype(GenotypeTable genos, ArrayList<Integer> crossType) {
+		// for every case, there must be some metric/standard/expectation to be followed
+		
+		//but FIRST: set STANDARD
+		byte[] exp_f1 = new byte[2]; //exp0 holds higher/major bit,1 holds lower/min/het
+		byte[] exp_self = new byte[2];
+		byte majAllele;
+		byte minAllele;
+		for(int site = 0; site < crossType.size(); site++) { //for each SNP, with corresponding crosstype
+			int cross = crossType.get(site); //get crosstype per site
+			majAllele = genos.majorAllele(site);
+			minAllele = genos.minorAllele(site);
+			//INCUR DOMINANCE / majority / minority
+			if(cross == 1) {  //MAJ X MAJ
+				exp_f1[0] = majAllele;
+				exp_f1[1] = majAllele;
+				
+				exp_self[0] = ;
+			}else if(cross == 2) { //MIN X MIN
+				exp_f1[0] = minAllele;
+				exp_f1[1] = minAllele;
+			}else if(cross == 3) { // MAJ X MIN == HET
+				exp_f1[0] = majAllele;
+				exp_f1[1] = minAllele;
+			}else if(cross == 4) { //MAJOR x HET
+				exp_f1[0] = majAllele;
+				exp_f1[1] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
+//				System.out.println(NucleotideAlignmentConstants.getNucleotideIUPAC(exp_f1[1]));
+ 			}else if(cross == 5) { //HET X MINOR
+				exp_f1[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
+				exp_f1[1] = minAllele;
+			}else if(cross == 6) { //HET X HET
+				exp_f1[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
+				exp_f1[1] = exp_f1[0];
+			}
+			
+//			System.out.println(genos.genotypeArray(1, 1));
+		}
 		
 	}
 
@@ -219,7 +258,7 @@ public class Step1 {
 			ArrayList<Integer> crossType = Step1.GetCrossType(genos);
 			Step1.InferGenotype(genos, crossType);
 			
-//			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));
+			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));
 
 			ProgramEnded();
 		} catch (Exception e) {
