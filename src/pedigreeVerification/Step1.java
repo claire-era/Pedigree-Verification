@@ -212,7 +212,7 @@ public class Step1 {
 				exp_self[0] = majAllele;
 				exp_self[1] = majAllele;
 			}else if(cross == 4) { //MAJOR x HET
-				exp_f1[0] = majAllele;
+				exp_f1[0] = majAllele; //doblehin mo nalang sis
 				exp_f1[1] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);
 //				System.out.println(NucleotideAlignmentConstants.getNucleotideIUPAC(exp_f1[1]));
 				
@@ -276,6 +276,12 @@ public class Step1 {
 			genos = Step1.ReadHMPFile(hmpFile);
 			ArrayList<Integer> crossType = Step1.GetCrossType(genos);
 			byte[][][] solution = Step1.InferGenotype(genos, crossType);
+			
+			
+			byte[][] f1ExpPerCross = solution[0]; //FOR SUBROUTINE 3.2a
+			byte[][] selfExpPerCross = solution[1]; //for subroutine 3.2b
+			
+			//TEST SOLUTIONS: f1ExpPerCross and selfExpPerCross from slide 28
 			
 			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));
 			
