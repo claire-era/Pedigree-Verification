@@ -180,10 +180,10 @@ public class Step1 {
 		return ct;
 	}
 	
-	private static void InferGenotype(GenotypeTable genos, ArrayList<Integer> crossType) {
-		// for every case, there must be some metric/standard/expectation to be followed
-		
-		//but FIRST: set STANDARD
+	private static byte[][][] InferGenotype(GenotypeTable genos, ArrayList<Integer> crossType) {
+		//RETURNS BYTE 2D ARRAY OF F1 AND SELF EXPECTED CROSS 
+		// for every case, there must be some expectation to be followed
+		byte[][][] exp = new byte[2][6][2]; //return value
 		byte[] exp_f1 = new byte[2]; //exp0 holds higher/major bit,1 holds lower/min/het
 		byte[] exp_self = new byte[2];
 		byte majAllele;
@@ -231,9 +231,12 @@ public class Step1 {
 				exp_self[0] = GenotypeTableUtils.getUnphasedDiploidValue(majAllele, minAllele);;
 				exp_self[1] = exp_self[0];
 			}
-			
-//			System.out.println(genos.genotypeArray(1, 1));
+			//STORE INSIDE RETURN ARRAY impose 0-indexing
+			exp[0][cross-1] = exp_f1;
+			exp[1][cross-1] = exp_self;
 		}
+		
+		return exp;
 		
 	}
 
@@ -272,10 +275,11 @@ public class Step1 {
 			// IMPLEMENT STEP 1
 			genos = Step1.ReadHMPFile(hmpFile);
 			ArrayList<Integer> crossType = Step1.GetCrossType(genos);
-			Step1.InferGenotype(genos, crossType);
+			byte[][][] solution = Step1.InferGenotype(genos, crossType);
 			
 			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));
-
+			
+						
 			ProgramEnded();
 		} catch (Exception e) {
 			e.printStackTrace();
