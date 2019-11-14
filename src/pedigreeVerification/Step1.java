@@ -86,7 +86,7 @@ public class Step1 {
 	}
 
 	private static Double getPvalue(Rengine re, double[] observed, double[] expected) {
-		String res = createVector(observed, expected);
+		String vector_of_obs_exp = createVector(observed, expected);
 		Double pval = null;
 		if (!re.waitForR()) {
 			System.out.println("Cannot load R");
@@ -94,12 +94,14 @@ public class Step1 {
 		}
 		try {
 			// ----- evaluate string
-			String sample_m = "matrix(" + res + ",nrow = 3)"; //for each element inside the classification array. expected[0]..[2].
-			re.eval("observed=" + sample_m);
-			re.eval("result=fisher.test(observed, alternative = \"greater\")");
-			pval = re.eval("result$p.value").asDouble();
+			String sample_m = "matrix(" + vector_of_obs_exp + ",nrow = 3)"; //for each element inside the classification array. expected[0]..[2].
+			re.eval("matrixof_exp_obs=" + sample_m);//store as an R object
+			re.eval("result=fisher.test(matrixof_exp_obs)");//call fisher.test and store in result
+			pval = re.eval("result$p.value").asDouble(); //get p-value from list of results
+//			System.out.println(pval);
 		} catch (Exception e) {
 		}
+//		System.out.print("\n");
 		return pval;
 	}
 	
@@ -140,6 +142,7 @@ public class Step1 {
 		ArrayList<Integer> polymarkers = GetPolymorphicMarkers(genos);
 		ArrayList<Integer> initTaxaSol = getInitSolution(polymarkers); // generated initial solution after good marker
 																		// selection //taxa indices of initial solution
+		
 		Rengine re = new Rengine(null, false, null);
 		int nCountSites = genos.numberOfSites();
 		double initSolTaxa = initTaxaSol.size();
@@ -152,6 +155,14 @@ public class Step1 {
 		double[] expected5 = {0, initSolTaxa/2, initSolTaxa/2};
 		double[] expected6 = {initSolTaxa/4, initSolTaxa/2, initSolTaxa/4};
 		
+		
+//		for(int i = 0; i < polymarkers.size(); i++) {
+//			System.out.println(polymarkers.get(i));
+//		}
+		
+//		for(int i = 0; i < initTaxaSol.size(); i++) {
+//			System.out.println(initTaxaSol.get(i));
+//		}
 		
 		for (int site = 0; site < nCountSites; site++) {
 			X = countAlleles(initTaxaSol, site, genos, 0); //0 for major allele
@@ -182,7 +193,6 @@ public class Step1 {
 	
 	private static byte[][][] InferGenotype(GenotypeTable genos, ArrayList<Integer> crossType) {
 		//RETURNS BYTE 2D ARRAY OF F1 AND SELF EXPECTED CROSS 
-		// for every case, there must be some expectation to be followed
 		byte[][][] exp = new byte[2][crossType.size()][2]; //return value
 		byte majAllele;
 		byte minAllele;
@@ -193,25 +203,25 @@ public class Step1 {
 			majAllele = genos.majorAllele(site);
 			minAllele = genos.minorAllele(site);
 			//INCUR DOMINANCE / majority / minority
-			if(cross == 1) {  //MAJ X MAJ
+			if(cross == 1) {  //MAJ X MAJ == 100% homo dom expected children
 				exp_f1[0] = majAllele;
 				exp_f1[1] = majAllele;
 				
 				exp_self[0] = majAllele;
 				exp_self[1] = majAllele;
-			}else if(cross == 2) { //MIN X MIN
+			}else if(cross == 2) { //MIN X MIN == 100% homo rec expected children
 				exp_f1[0] = minAllele;
 				exp_f1[1] = minAllele;
 				
 				exp_self[0] = minAllele;
 				exp_self[1] = minAllele;
-			}else if(cross == 3) { // MAJ X MIN == HET
+			}else if(cross == 3) { // MAJ X MIN == HET == 100% het exp
 				exp_f1[0] = majAllele;
 				exp_f1[1] = minAllele;
 				
 				exp_self[0] = majAllele;
 				exp_self[1] = majAllele;
-			}else if(cross == 4) { //MAJOR x HET
+			}else if(cross == 4) { //MAJOR x HET == 50% het, 50% homo dom
 				exp_f1[0] = majAllele; //doblehin mo nalang sis
 				exp_f1[1] = GenotypeTableUtils.getDiploidValue(majAllele, minAllele);
 //				System.out.println(NucleotideAlignmentConstants.getNucleotideIUPAC(exp_f1[1]));
@@ -245,27 +255,41 @@ public class Step1 {
 		
 	}
 	
-	private static void testSolution(GenotypeTable genos, byte[][] exp_f1) {		
+	private static void testSolution(GenotypeTable genos, byte[][] exp_f1, ArrayList<Integer> crossType) {		
 		int count_1 = 0,count_0 = 0;
 		for(int t = 0; t < genos.numberOfTaxa(); t++) {
 			count_1 = 0;
 			count_0 = 0;
 			for(int site = 0; site < genos.numberOfSites(); site++) {
-				byte a1 = exp_f1[site][0]; //first allele
-				byte a2 = exp_f1[site][1]; //second allele
-//				System.out.print(NucleotideAlignmentConstants.getNucleotideIUPAC(a1) + NucleotideAlignmentConstants.getNucleotideIUPAC(a2) + " ");
-//				System.out.print(genos.genotypeAsString(t, site)+" ");
-//					System.out.print("1");
-				
-				//CURRENT: IMPOSITION OF STRICT EQUALITY, WITHOUT CONSIDERATION OF ACCEPTANCE MATRIX 
-				if(GenotypeTableUtils.getDiploidValue(a1,a2) == genos.genotype(t, site)) {
-					count_1++;
-				}else {
-					count_0++;
+				int ct = crossType.get(site);
+				byte a0 = 0; //less significant //minor allele
+				byte a1 = 0; //most significant //major allele
+				String g = null;
+				String h = null;
+				String gene = genos.genotypeAsString(t, site);
+				if(ct == 1 || ct == 2 || ct == 3) {
+					a1 = exp_f1[site][0];
+					a0 = exp_f1[site][1];
+					
+					g = NucleotideAlignmentConstants.getNucleotideIUPAC(GenotypeTableUtils.getDiploidValue(a1, a0));
+					
+					if(g == gene) count_1++;
+					else count_0++;
+					continue;
+				}else if(ct == 4 || ct == 5 || ct == 6) {
+					a1 = exp_f1[site][0];
+					a0 = exp_f1[site][1];
+					
+					g = NucleotideAlignmentConstants.getNucleotideIUPAC(a1);
+					h = NucleotideAlignmentConstants.getNucleotideIUPAC(a0);
+					
+					if(gene == g || gene == h) count_1++;
+					else count_0++;
+					continue;
 				}				
 			}
-			System.out.print("\n");
-			System.out.println((count_1 > count_0) ? "1" : "0");
+//			System.out.println("\n");
+//			System.out.println((count_1 > count_0) ? "1" : "0");
 		}
 		
 	}
@@ -312,7 +336,7 @@ public class Step1 {
 //			byte[][] selfExpPerCross = solution[1]; //for subroutine 3.2b
 			
 			//TEST SOLUTIONS: f1ExpPerCross for subroutine 3.2a
-			testSolution(genos, solution[0]);
+			testSolution(genos, solution[0], crossType);
 			
 //			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));
 			
