@@ -12,6 +12,8 @@ import net.maizegenetics.dna.snp.NucleotideAlignmentConstants;
 public class Step1 {
 	private static ArrayList<GenotypeTable> listOfGenos;
 	private static GenotypeTable genos;
+	private static int scores_auto[];
+//	public static Integer[] scores_manual;
 
 	public Step1(String[] args) {
 		Step1.checkInputs(args);
@@ -24,6 +26,7 @@ public class Step1 {
 
 	private static GenotypeTable ReadHMPFile(String hmp_filename) {
 		genos = ImportUtils.readFromHapmap(hmp_filename);
+		System.out.println("In " + hmp_filename+ ":");
 		return genos;
 	}
 
@@ -93,6 +96,7 @@ public class Step1 {
 			return null;
 		}
 		try {
+//			  exp <- ceiling(sum(obs)*case/sum(case));
 			// ----- evaluate string
 			String sample_m = "matrix(" + vector_of_obs_exp + ",nrow = 3)"; //for each element inside the classification array. expected[0]..[2].
 			re.eval("matrixof_exp_obs=" + sample_m);//store as an R object
@@ -255,7 +259,8 @@ public class Step1 {
 		
 	}
 	
-	private static void testSolution(GenotypeTable genos, byte[][] exp_f1, ArrayList<Integer> crossType) {		
+	private static int[] testSolution(GenotypeTable genos, byte[][] exp_f1, ArrayList<Integer> crossType) {		
+		int scores_auto[] = new int[genos.numberOfTaxa()];
 		int count_1 = 0,count_0 = 0;
 		for(int t = 0; t < genos.numberOfTaxa(); t++) {
 			count_1 = 0;
@@ -288,10 +293,12 @@ public class Step1 {
 					continue;
 				}				
 			}
-//			System.out.println("\n");
-//			System.out.println((count_1 > count_0) ? "1" : "0");
+//			System.out.print((count_1 > count_0) ? "1 " : "0 ");
+			if(count_1 > count_0) {
+				scores_auto[t] = 1;
+			}else scores_auto[t] = 0;
 		}
-		
+		return scores_auto;
 	}
 
 	private static void checkInputs(String[] args) {
@@ -314,36 +321,59 @@ public class Step1 {
 //		Thread.sleep(500);
 		long startTime = System.nanoTime();
 		long endTime = System.nanoTime();
-		System.out.println("Took " + (endTime - startTime) + " ns");
+//		System.out.println("\nTook " + (endTime - startTime) + " ns");
 	}
 
 	private static void start(String hmpFile, String pedFile, double cutOff) throws InterruptedException {
-		System.out.println("Cut-off: " + cutOff);
+//		System.out.println("Cut-off: " + cutOff);
 
 		try {
 			// READ FILE
 //			Step1.listOfGenos = ReadFile(hmpFile, pedFile);
 			// GET KEYS FROM CORRESPONDING PEDIGREE FILE
 //			ArrayList<String> keys = PedigreeFileInfo.getKeys();
-
+			
+//			System.out.println(listOfGenos.size());
+			
+//			for(int i = 0; i < listOfGenos.size(); i++) {
+//				genos = listOfGenos.get(i);
+//				System.out.println(genos.hasGenotype());
+//				ArrayList<Integer> crossType = Step1.GetCrossType(genos);
+//				byte[][][] solution = Step1.InferGenotype(genos, crossType);
+//				//TEST SOLUTIONS: f1ExpPerCross for subroutine 3.2a
+//				testSolution(genos, solution[0], crossType);
+//				ProgramEnded();
+//				break;
+//}
+			
+			
+			
+			
 			// IMPLEMENT STEP 1
 			genos = Step1.ReadHMPFile(hmpFile);
+//			ArrayList<String> keys = PedigreeFileInfo.getKeys();
+			
+//			for(int i = 0; i < keys.size(); i++) {
+//				System.out.println(keys.get(i));
+//			}
 			ArrayList<Integer> crossType = Step1.GetCrossType(genos);
 			byte[][][] solution = Step1.InferGenotype(genos, crossType);
-			
-			
 //			byte[][] f1ExpPerCross = solution[0]; //FOR SUBROUTINE 3.2a
-//			byte[][] selfExpPerCross = solution[1]; //for subroutine 3.2b
+//			byte[][] selfExpPerCross = solution[1]; //for subroutine 3.2b	
 			
 			//TEST SOLUTIONS: f1ExpPerCross for subroutine 3.2a
-			testSolution(genos, solution[0], crossType);
-			
-//			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));
-			
-						
+			Step1.scores_auto= testSolution(genos, solution[0], crossType);	
+
+//			System.out.println("\n");
+//			for(int i = 0; i < crossType.size(); i++) System.out.println(crossType.get(i));						
 			ProgramEnded();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public int[] getAutomatedScores() {
+		return Step1.scores_auto;
+		
 	}
 }
